@@ -1,221 +1,279 @@
-# ShufflePod
+# ShufflePod 🔀
 
-A TypeScript service for creating shuffled and custom podcast feeds. Take any existing podcast RSS feed and randomize the episode order, or (coming soon) turn your Plex playlists into podcast feeds.
+A simple service for creating shuffled podcast feeds. Enter any podcast RSS feed URL and get back a permanently shuffled version that you can add to your podcast app (like Overcast).
 
 ## Features
 
-### Current Features
-- **Shuffle Existing Podcast Feeds**: Take any podcast RSS feed and randomize the episode order
-- **Reproducible Shuffling**: Use optional seed parameter for consistent shuffling
-- **RESTful API**: Simple HTTP API built with Express and TypeScript
-- **Docker Support**: Easy deployment with Docker and docker-compose
-- **Type Safety**: Full TypeScript support for better developer experience
+- **Simple Web Interface**: Easy form to generate shuffled feeds
+- **Static Feed Generation**: Creates permanent RSS feeds you can add to any podcast app
+- **Reproducible Shuffling**: Optional seed parameter for consistent shuffle orders
+- **Feed Management**: View and manage all your generated feeds in one place
+- **Netlify Ready**: Deployed as serverless functions with blob storage
 
-### Planned Features
-- **Plex Integration**: Convert Plex playlists into podcast feeds
-- **Feed Caching**: Improved performance with intelligent caching
-- **Custom Feed Filtering**: Select specific episodes or date ranges
+## Quick Start (Local Development)
 
-## Quick Start
-
-### Using Docker (Recommended)
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd shufflepod
-```
-
-2. Build and run with docker-compose:
-```bash
-docker-compose up -d
-```
-
-3. The service will be available at `http://localhost:3000`
-
-### Local Development
-
-1. Install Node.js 20 or higher
-
-2. Install dependencies:
+1. **Install dependencies**:
 ```bash
 npm install
 ```
 
-3. Run in development mode:
+2. **Run locally with Netlify Dev**:
 ```bash
 npm run dev
 ```
 
-4. Or build and run in production mode:
+3. **Open in browser**:
+```
+http://localhost:8888
+```
+
+## Deployment to Netlify
+
+### One-Click Deploy
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/yourusername/shufflepod)
+
+### Manual Deploy
+
+1. **Install Netlify CLI**:
+```bash
+npm install -g netlify-cli
+```
+
+2. **Build the project**:
 ```bash
 npm run build
-npm start
 ```
 
-## API Usage
-
-### Shuffle a Podcast Feed
-
-**Endpoint**: `GET /shuffle`
-
-**Parameters**:
-- `url` (required): The URL of the original podcast feed
-- `seed` (optional): Integer seed for reproducible shuffling
-
-**Example**:
+3. **Deploy**:
 ```bash
-curl "http://localhost:3000/shuffle?url=https://example.com/podcast/feed.xml"
+netlify deploy --prod
 ```
 
-**With seed for reproducible shuffling**:
-```bash
-curl "http://localhost:3000/shuffle?url=https://example.com/podcast/feed.xml&seed=12345"
+### Environment Setup
+
+No environment variables needed! The app uses Netlify Blobs for storage, which is automatically configured when deployed to Netlify.
+
+## How It Works
+
+### Architecture
+
+```
+┌─────────────────┐
+│  Web Interface  │  (public/index.html)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Netlify         │  (Hono API)
+│ Functions       │  /api/generate, /api/feeds, /api/feed/:id
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Netlify Blobs   │  (Feed storage)
+│ • feeds         │  (XML files)
+│ • feed-metadata │  (JSON list)
+└─────────────────┘
 ```
 
-### Using in Podcast Apps
+### Flow
 
-Most podcast apps allow you to add feeds by URL. Simply copy the shuffle URL and paste it into your podcast app:
+1. **User enters podcast feed URL** in the web interface
+2. **API fetches and parses** the original RSS feed
+3. **Episodes are shuffled** (with optional seed)
+4. **New RSS feed is generated** and saved to Netlify Blobs
+5. **Unique feed URL is returned** (e.g., `/api/feed/abc123xyz`)
+6. **User adds URL to podcast app** (Overcast, Apple Podcasts, etc.)
 
+### Storage
+
+- **Netlify Blobs**: Serverless key-value storage for generated feeds
+- **Two stores**:
+  - `feeds`: Stores the actual RSS XML content
+  - `feed-metadata`: Stores the list of feeds with metadata (title, date, seed, etc.)
+
+## API Endpoints
+
+### `POST /api/generate`
+Generate a new shuffled feed.
+
+**Request Body**:
+```json
+{
+  "url": "https://example.com/podcast/feed.xml",
+  "seed": 12345  // optional
+}
 ```
-http://localhost:3000/shuffle?url=https://example.com/podcast/feed.xml
+
+**Response**:
+```json
+{
+  "success": true,
+  "feed": {
+    "id": "abc123xyz",
+    "originalUrl": "https://example.com/podcast/feed.xml",
+    "title": "My Podcast",
+    "feedUrl": "/api/feed/abc123xyz",
+    "seed": 12345,
+    "createdAt": "2026-08-16T03:58:00.000Z"
+  }
+}
 ```
 
-If you want the same shuffle order every time, add a seed:
+### `GET /api/feeds`
+List all generated feeds.
+
+**Response**:
+```json
+{
+  "feeds": [
+    {
+      "id": "abc123xyz",
+      "originalUrl": "https://example.com/podcast/feed.xml",
+      "title": "My Podcast",
+      "feedUrl": "/api/feed/abc123xyz",
+      "seed": 12345,
+      "createdAt": "2026-08-16T03:58:00.000Z"
+    }
+  ]
+}
 ```
-http://localhost:3000/shuffle?url=https://example.com/podcast/feed.xml&seed=42
+
+### `GET /api/feed/:id`
+Get a specific shuffled feed (RSS XML).
+
+**Response**: RSS 2.0 XML
+
+### `DELETE /api/feed/:id`
+Delete a generated feed.
+
+**Response**:
+```json
+{
+  "success": true
+}
 ```
 
-### Check Service Health
+### `GET /api/health`
+Health check endpoint.
 
-**Endpoint**: `GET /health`
-
-```bash
-curl http://localhost:3000/health
+**Response**:
+```json
+{
+  "status": "healthy"
+}
 ```
 
-## Configuration
+## Technology Stack
 
-Configuration can be set via environment variables or a `.env` file:
-
-- `BASE_URL`: Base URL for the service (default: `http://localhost:3000`)
-- `PORT`: Port to bind to (default: `3000`)
-- `HOST`: Host to bind to (default: `0.0.0.0`)
-- `CACHE_TTL_SECONDS`: Cache duration in seconds (default: `3600`)
-- `MAX_FEED_SIZE_MB`: Maximum feed size in megabytes (default: `50`)
-- `REQUEST_TIMEOUT_MS`: Timeout for fetching feeds in milliseconds (default: `30000`)
+- **Framework**: [Hono](https://hono.dev/) - Fast, lightweight web framework
+- **Runtime**: Node.js 20+ (Netlify Functions)
+- **Storage**: [Netlify Blobs](https://docs.netlify.com/blobs/overview/) - Serverless key-value storage
+- **RSS Parsing**: [rss-parser](https://www.npmjs.com/package/rss-parser)
+- **RSS Generation**: [feed](https://www.npmjs.com/package/feed)
+- **Frontend**: Vanilla HTML/CSS/JavaScript
 
 ## Use Cases
 
 ### Random Episode Discovery
-Breathe new life into your favorite podcasts by listening to episodes in random order. Great for:
+Breathe new life into your favorite podcasts by listening to episodes in random order. Perfect for:
 - Educational podcasts where episode order doesn't matter
-- Comedy podcasts
-- News/current events archives
-- Interview shows
+- Comedy shows
+- Interview podcasts
+- News archives
 
-### Different Shuffle Per Device
-Use different seeds for different devices to get unique shuffle orders:
-- Phone: `seed=1`
-- Tablet: `seed=2`
-- Desktop: `seed=3`
+### Multiple Shuffles
+Generate different shuffled versions of the same podcast:
+- Use seed `1` for your morning commute version
+- Use seed `2` for your workout version
+- Use seed `3` for your evening version
 
-### Sharing Custom Orders
-Share your favorite shuffle with friends by sharing your seed number.
+### Share Custom Orders
+Create a specific shuffle and share the feed URL with friends so they experience the same episode order.
 
-## Architecture
+## Using with Podcast Apps
 
-The service is built with TypeScript and designed with modularity in mind:
+### Overcast (Recommended)
+1. Copy the feed URL from ShufflePod
+2. Open Overcast app
+3. Tap "+" to add a podcast
+4. Paste the URL
+5. Tap "Add"
 
-```
-shufflepod/
-├── src/
-│   ├── index.ts           # Express app setup and server
-│   ├── routes.ts          # API route definitions
-│   ├── feedProcessor.ts   # RSS feed processing and randomization
-│   ├── config.ts          # Configuration management
-│   └── __tests__/         # Test files
-├── package.json           # Dependencies and scripts
-├── tsconfig.json         # TypeScript configuration
-└── Dockerfile            # Container configuration
-```
+### Apple Podcasts
+1. Copy the feed URL
+2. Open Apple Podcasts
+3. Go to Library → Shows
+4. Tap "..."
+5. Select "Add a Show by URL"
+6. Paste and add
 
-This architecture makes it easy to add new features like Plex integration as separate modules.
-
-## Future: Plex Integration
-
-The planned Plex integration will allow you to:
-- Connect to your Plex Media Server
-- Select audio playlists
-- Generate podcast feeds from your playlists
-- Keep feeds in sync with playlist changes
-
-The modular architecture is designed to support this feature in the same service.
+### Pocket Casts
+1. Copy the feed URL
+2. Open Pocket Casts
+3. Tap "Search"
+4. Paste the URL in the search box
+5. Add the podcast
 
 ## Development
 
-### Available Scripts
-
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build TypeScript to JavaScript
-- `npm start` - Run production build
-- `npm test` - Run tests
-- `npm run lint` - Lint code with ESLint
-- `npm run format` - Format code with Prettier
-
-### Running Tests
-```bash
-npm test
+### Project Structure
+```
+shufflepod/
+├── public/
+│   └── index.html           # Web interface
+├── src/
+│   └── feedProcessor.ts     # Feed parsing and shuffling
+├── netlify/
+│   └── functions/
+│       └── api.ts           # Hono API routes
+├── netlify.toml            # Netlify configuration
+├── package.json            # Dependencies
+└── tsconfig.json          # TypeScript config
 ```
 
-### Code Formatting
+### Local Testing
 ```bash
-npm run format
+# Install dependencies
+npm install
+
+# Run with Netlify Dev (includes functions + blobs emulation)
+npm run dev
+
+# Build TypeScript
+npm run build
 ```
 
-### Linting
-```bash
-npm run lint
-```
+### Adding Features
 
-## Tech Stack
+The codebase is designed to be extended. Future features could include:
+- Plex Media Server integration (turn playlists into podcast feeds)
+- Feed filtering (date ranges, episode selection)
+- Automatic feed updates on a schedule
+- User authentication for private feeds
 
-- **Runtime**: Node.js 20+
-- **Language**: TypeScript
-- **Framework**: Express
-- **RSS Parsing**: rss-parser
-- **RSS Generation**: feed
-- **HTTP Client**: axios
-- **Testing**: Jest + Supertest
+## Limitations
+
+- **One-time generation**: Feeds are generated once and don't auto-update with new episodes from the source
+- **No authentication**: Generated feed URLs are public (anyone with the URL can access)
+- **Storage limits**: Netlify Blobs has storage limits on free tier
+
+## Future Enhancements
+
+- [ ] Plex Media Server integration
+- [ ] Scheduled feed regeneration to pick up new episodes
+- [ ] Feed filtering options
+- [ ] User accounts and private feeds
+- [ ] Feed analytics (play counts, etc.)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome! Please feel free to submit a Pull Request.
 
 ## License
 
 MIT License - See LICENSE file for details
-
-## Troubleshooting
-
-### Feed Not Loading
-- Verify the original feed URL is accessible
-- Check that the feed is a valid RSS/Atom feed
-- Ensure the feed size is under the configured limit
-
-### Timeout Errors
-- Increase `REQUEST_TIMEOUT_MS` for slow feeds
-- Check your network connection
-- Verify the source feed is responding
-
-### Docker Issues
-- Ensure port 3000 is not already in use
-- Try `docker-compose down` and `docker-compose up --build` to rebuild
-
-### TypeScript Build Errors
-- Run `npm install` to ensure all dependencies are installed
-- Delete `node_modules` and `dist` folders and reinstall
-- Check that you're using Node.js 20 or higher
 
 ## Support
 

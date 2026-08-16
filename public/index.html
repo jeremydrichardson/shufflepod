@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShufflePod - Shuffle Your Podcast Feeds</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .feed-list {
+            margin-top: 20px;
+        }
+
+        .feed-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .feed-item:hover {
+            border-color: #667eea;
+        }
+
+        .feed-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .feed-meta {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .feed-url {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+
+        .feed-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        .btn-copy {
+            background: #28a745;
+        }
+
+        .btn-copy:hover {
+            background: #218838;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔀 ShufflePod</h1>
+            <p>Shuffle your favorite podcast feeds</p>
+        </div>
+
+        <div class="card">
+            <h2>Generate Shuffled Feed</h2>
+            <div id="message"></div>
+            <form id="generateForm">
+                <div class="form-group">
+                    <label for="feedUrl">Podcast Feed URL</label>
+                    <input 
+                        type="text" 
+                        id="feedUrl" 
+                        name="feedUrl" 
+                        placeholder="https://example.com/podcast/feed.xml"
+                        required
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="seed">Seed (optional - leave empty for random)</label>
+                    <input 
+                        type="number" 
+                        id="seed" 
+                        name="seed" 
+                        placeholder="e.g., 12345"
+                    >
+                </div>
+                <button type="submit" class="btn" id="generateBtn">
+                    Generate Shuffled Feed
+                </button>
+            </form>
+            <div class="note">
+                💡 <strong>Tip:</strong> Use the same seed to get the same shuffle order every time. Leave empty for a random shuffle.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Your Shuffled Feeds</h2>
+            <div id="feedList" class="feed-list">
+                <div class="loading">Loading feeds...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        async function generateFeed(url, seed) {
+            const response = await fetch(`${API_BASE}/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url, seed }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to generate feed');
+            }
+
+            return response.json();
+        }
+
+        async function loadFeeds() {
+            const response = await fetch(`${API_BASE}/feeds`);
+            if (!response.ok) {
+                throw new Error('Failed to load feeds');
+            }
+            return response.json();
+        }
+
+        async function deleteFeed(id) {
+            const response = await fetch(`${API_BASE}/feed/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete feed');
+            }
+
+            return response.json();
+        }
+
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('Feed URL copied to clipboard!', 'success');
+            }).catch(() => {
+                showMessage('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        function renderFeeds(feeds) {
+            const feedList = document.getElementById('feedList');
+            
+            if (feeds.length === 0) {
+                feedList.innerHTML = '<div class="empty-state">No feeds generated yet. Create your first shuffled feed above!</div>';
+                return;
+            }
+
+            feedList.innerHTML = feeds.map(feed => {
+                const fullUrl = `${window.location.origin}${feed.feedUrl}`;
+                const date = new Date(feed.createdAt).toLocaleString();
+                
+                return `
+                    <div class="feed-item" data-id="${feed.id}">
+                        <div class="feed-title">${feed.title}</div>
+                        <div class="feed-meta">
+                            Created: ${date} ${feed.seed ? `• Seed: ${feed.seed}` : ''}
+                        </div>
+                        <div class="feed-url">${fullUrl}</div>
+                        <div class="feed-actions">
+                            <button class="btn btn-small btn-copy" onclick="copyToClipboard('${fullUrl}')">
+                                Copy URL
+                            </button>
+                            <button class="btn btn-small btn-delete" onclick="handleDelete('${feed.id}')">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function handleDelete(id) {
+            if (!confirm('Are you sure you want to delete this feed?')) {
+                return;
+            }
+
+            try {
+                await deleteFeed(id);
+                showMessage('Feed deleted successfully', 'success');
+                await refreshFeeds();
+            } catch (error) {
+                showMessage(error.message, 'error');
+            }
+        }
+
+        async function refreshFeeds() {
+            try {
+                const data = await loadFeeds();
+                renderFeeds(data.feeds);
+            } catch (error) {
+                document.getElementById('feedList').innerHTML = 
+                    '<div class="empty-state">Failed to load feeds</div>';
+            }
+        }
+
+        document.getElementById('generateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('generateBtn');
+            const url = document.getElementById('feedUrl').value;
+            const seed = document.getElementById('seed').value;
+            
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            
+            try {
+                await generateFeed(url, seed || undefined);
+                showMessage('Feed generated successfully!', 'success');
+                document.getElementById('generateForm').reset();
+                await refreshFeeds();
+            } catch (error) {
+                showMessage(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Generate Shuffled Feed';
+            }
+        });
+
+        window.copyToClipboard = copyToClipboard;
+        window.handleDelete = handleDelete;
+
+        refreshFeeds();
+    </script>
+</body>
+</html>

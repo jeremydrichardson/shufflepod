@@ -1,7 +1,5 @@
 import Parser from 'rss-parser';
 import { Feed } from 'feed';
-import axios from 'axios';
-import { config } from './config';
 
 interface FeedItem extends Parser.Item {
   enclosure?: {
@@ -32,7 +30,7 @@ export class FeedProcessor {
 
   constructor() {
     this.parser = new Parser({
-      timeout: config.requestTimeoutMs,
+      timeout: 30000,
       customFields: {
         feed: ['itunes'],
         item: ['itunes', 'enclosure'],
@@ -41,39 +39,23 @@ export class FeedProcessor {
   }
 
   async fetchFeed(feedUrl: string): Promise<ParsedFeed> {
-    const response = await axios.get(feedUrl, {
-      timeout: config.requestTimeoutMs,
-      maxContentLength: config.maxFeedSizeMb * 1024 * 1024,
-      responseType: 'text',
-    });
-
-    return this.parser.parseString(response.data);
+    return this.parser.parseURL(feedUrl);
   }
 
-  randomizeFeed(
-    originalFeed: ParsedFeed,
-    seed?: number,
-    baseUrl?: string
-  ): string {
-    const actualBaseUrl = baseUrl || config.baseUrl;
-
+  shuffleFeed(originalFeed: ParsedFeed, seed?: number, baseUrl?: string): string {
     const feed = new Feed({
-      title: `${originalFeed.title || 'Shuffled Podcast'}`,
+      title: `🔀 ${originalFeed.title || 'Shuffled Podcast'}`,
       description: `Shuffled version of: ${originalFeed.description || originalFeed.title || 'Unknown Podcast'}`,
-      id: originalFeed.link || actualBaseUrl,
-      link: originalFeed.link || actualBaseUrl,
+      id: originalFeed.link || baseUrl || 'https://shufflepod.netlify.app',
+      link: originalFeed.link || baseUrl || 'https://shufflepod.netlify.app',
       language: originalFeed.language || 'en',
       image: originalFeed.image?.url || originalFeed.itunes?.image,
       copyright: originalFeed.copyright,
       generator: 'ShufflePod',
       feedLinks: {
-        rss: actualBaseUrl,
+        rss: baseUrl || 'https://shufflepod.netlify.app',
       },
     });
-
-    if (originalFeed.itunes?.author) {
-      feed.addCategory(originalFeed.itunes.author);
-    }
 
     const items = [...(originalFeed.items || [])];
 
@@ -94,11 +76,7 @@ export class FeedProcessor {
       };
 
       if (item.creator || item.author) {
-        feedItem.author = [
-          {
-            name: item.creator || item.author || '',
-          },
-        ];
+        feedItem.author = [{ name: item.creator || item.author || '' }];
       }
 
       if (item.enclosure?.url) {
@@ -117,15 +95,6 @@ export class FeedProcessor {
     });
 
     return feed.rss2();
-  }
-
-  async processAndRandomize(
-    feedUrl: string,
-    seed?: number,
-    baseUrl?: string
-  ): Promise<string> {
-    const feedData = await this.fetchFeed(feedUrl);
-    return this.randomizeFeed(feedData, seed, baseUrl);
   }
 
   private shuffle<T>(array: T[]): void {
