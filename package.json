@@ -1,6 +1,6 @@
 {
   "name": "shufflepod",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "A service for creating shuffled podcast feeds",
   "type": "module",
   "scripts": {
@@ -19,10 +19,8 @@
   "dependencies": {
     "hono": "^4.6.3",
     "@netlify/functions": "^2.8.1",
-    "@netlify/blobs": "^8.1.0",
     "rss-parser": "^3.13.0",
-    "feed": "^4.2.2",
-    "nanoid": "^5.0.7"
+    "feed": "^4.2.2"
   },
   "devDependencies": {
     "@types/node": "^22.5.5",

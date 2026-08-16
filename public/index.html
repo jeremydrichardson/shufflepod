@@ -107,72 +107,36 @@
             transform: none;
         }
 
-        .feed-list {
-            margin-top: 20px;
+        .result-section {
+            display: none;
+            margin-top: 30px;
         }
 
-        .feed-item {
+        .result-section.visible {
+            display: block;
+        }
+
+        .result-url {
             background: #f8f9fa;
-            border: 2px solid #e9ecef;
+            border: 2px solid #667eea;
             border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: border-color 0.3s;
-        }
-
-        .feed-item:hover {
-            border-color: #667eea;
-        }
-
-        .feed-title {
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .feed-meta {
-            font-size: 0.9em;
-            color: #666;
-            margin-bottom: 15px;
-        }
-
-        .feed-url {
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 10px;
+            padding: 15px;
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
             word-break: break-all;
-            margin-bottom: 10px;
-        }
-
-        .feed-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-small {
-            padding: 8px 16px;
-            font-size: 14px;
-            width: auto;
+            margin-bottom: 15px;
+            color: #333;
         }
 
         .btn-copy {
             background: #28a745;
+            width: auto;
+            display: inline-block;
+            margin-right: 10px;
         }
 
         .btn-copy:hover {
             background: #218838;
-        }
-
-        .btn-delete {
-            background: #dc3545;
-        }
-
-        .btn-delete:hover {
-            background: #c82333;
         }
 
         .message {
@@ -193,18 +157,6 @@
             border: 1px solid #c3e6cb;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-
         .note {
             background: #fff3cd;
             border: 1px solid #ffeeba;
@@ -213,6 +165,39 @@
             margin-top: 15px;
             font-size: 0.9em;
             color: #856404;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.95em;
+            color: #004085;
+        }
+
+        .info-box h3 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        .example {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 10px 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
         }
     </style>
 </head>
@@ -224,8 +209,9 @@
         </div>
 
         <div class="card">
-            <h2>Generate Shuffled Feed</h2>
+            <h2>Generate Shuffled Feed URL</h2>
             <div id="message"></div>
+            
             <form id="generateForm">
                 <div class="form-group">
                     <label for="feedUrl">Podcast Feed URL</label>
@@ -238,7 +224,7 @@
                     >
                 </div>
                 <div class="form-group">
-                    <label for="seed">Seed (optional - leave empty for random)</label>
+                    <label for="seed">Seed (optional - for consistent shuffle order)</label>
                     <input 
                         type="number" 
                         id="seed" 
@@ -247,62 +233,65 @@
                     >
                 </div>
                 <button type="submit" class="btn" id="generateBtn">
-                    Generate Shuffled Feed
+                    Generate Feed URL
                 </button>
             </form>
+
             <div class="note">
-                💡 <strong>Tip:</strong> Use the same seed to get the same shuffle order every time. Leave empty for a random shuffle.
+                💡 <strong>Tip:</strong> Use the same seed to get the same shuffle order every time. Leave empty for a random shuffle based on current timestamp.
+            </div>
+
+            <div id="resultSection" class="result-section">
+                <h3 style="margin-bottom: 15px; color: #333;">Your Shuffled Feed URL</h3>
+                <div class="result-url" id="resultUrl"></div>
+                <button class="btn btn-copy" onclick="copyToClipboard()">
+                    📋 Copy URL
+                </button>
+                <button class="btn btn-copy" onclick="resetForm()" style="background: #6c757d;">
+                    🔄 Create Another
+                </button>
             </div>
         </div>
 
         <div class="card">
-            <h2>Your Shuffled Feeds</h2>
-            <div id="feedList" class="feed-list">
-                <div class="loading">Loading feeds...</div>
+            <h2>How to Use in Overcast</h2>
+            <div class="info-box">
+                <ol style="margin-left: 20px;">
+                    <li>Enter your podcast feed URL above and click "Generate Feed URL"</li>
+                    <li>Copy the generated URL</li>
+                    <li>Open Overcast app on your device</li>
+                    <li>Tap the "+" button to add a podcast</li>
+                    <li>Select "Add URL" and paste your shuffled feed URL</li>
+                    <li>Tap "Add" and enjoy your shuffled podcast!</li>
+                </ol>
+            </div>
+            
+            <div class="info-box" style="margin-top: 20px;">
+                <h3>How It Works</h3>
+                <p>ShufflePod dynamically generates shuffled versions of podcast feeds:</p>
+                <ul>
+                    <li><strong>Dynamic:</strong> Feed is generated fresh each time Overcast checks for updates</li>
+                    <li><strong>Consistent:</strong> Using the same seed always produces the same shuffle order</li>
+                    <li><strong>Up-to-date:</strong> New episodes from the original feed are automatically included</li>
+                    <li><strong>Cached:</strong> Overcast caches the feed, so we're not constantly fetching</li>
+                </ul>
+            </div>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <h3>Example URLs</h3>
+                <p>Your generated feed URL will look like:</p>
+                <div class="example">
+                    https://yoursite.netlify.app/api/feed?url=https://example.com/podcast.xml&seed=12345
+                </div>
+                <p style="margin-top: 10px;"><strong>Without seed</strong> (random shuffle based on timestamp):</p>
+                <div class="example">
+                    https://yoursite.netlify.app/api/feed?url=https://example.com/podcast.xml
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const API_BASE = '/api';
-
-        async function generateFeed(url, seed) {
-            const response = await fetch(`${API_BASE}/generate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ url, seed }),
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to generate feed');
-            }
-
-            return response.json();
-        }
-
-        async function loadFeeds() {
-            const response = await fetch(`${API_BASE}/feeds`);
-            if (!response.ok) {
-                throw new Error('Failed to load feeds');
-            }
-            return response.json();
-        }
-
-        async function deleteFeed(id) {
-            const response = await fetch(`${API_BASE}/feed/${id}`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete feed');
-            }
-
-            return response.json();
-        }
-
         function showMessage(text, type = 'success') {
             const messageDiv = document.getElementById('message');
             messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
@@ -311,97 +300,47 @@
             }, 5000);
         }
 
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
+        function copyToClipboard() {
+            const urlText = document.getElementById('resultUrl').textContent;
+            navigator.clipboard.writeText(urlText).then(() => {
                 showMessage('Feed URL copied to clipboard!', 'success');
             }).catch(() => {
                 showMessage('Failed to copy to clipboard', 'error');
             });
         }
 
-        function renderFeeds(feeds) {
-            const feedList = document.getElementById('feedList');
-            
-            if (feeds.length === 0) {
-                feedList.innerHTML = '<div class="empty-state">No feeds generated yet. Create your first shuffled feed above!</div>';
-                return;
-            }
-
-            feedList.innerHTML = feeds.map(feed => {
-                const fullUrl = `${window.location.origin}${feed.feedUrl}`;
-                const date = new Date(feed.createdAt).toLocaleString();
-                
-                return `
-                    <div class="feed-item" data-id="${feed.id}">
-                        <div class="feed-title">${feed.title}</div>
-                        <div class="feed-meta">
-                            Created: ${date} ${feed.seed ? `• Seed: ${feed.seed}` : ''}
-                        </div>
-                        <div class="feed-url">${fullUrl}</div>
-                        <div class="feed-actions">
-                            <button class="btn btn-small btn-copy" onclick="copyToClipboard('${fullUrl}')">
-                                Copy URL
-                            </button>
-                            <button class="btn btn-small btn-delete" onclick="handleDelete('${feed.id}')">
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        async function handleDelete(id) {
-            if (!confirm('Are you sure you want to delete this feed?')) {
-                return;
-            }
-
-            try {
-                await deleteFeed(id);
-                showMessage('Feed deleted successfully', 'success');
-                await refreshFeeds();
-            } catch (error) {
-                showMessage(error.message, 'error');
-            }
-        }
-
-        async function refreshFeeds() {
-            try {
-                const data = await loadFeeds();
-                renderFeeds(data.feeds);
-            } catch (error) {
-                document.getElementById('feedList').innerHTML = 
-                    '<div class="empty-state">Failed to load feeds</div>';
-            }
+        function resetForm() {
+            document.getElementById('generateForm').reset();
+            document.getElementById('resultSection').classList.remove('visible');
         }
 
         document.getElementById('generateForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const btn = document.getElementById('generateBtn');
-            const url = document.getElementById('feedUrl').value;
+            const feedUrl = document.getElementById('feedUrl').value;
             const seed = document.getElementById('seed').value;
             
-            btn.disabled = true;
-            btn.textContent = 'Generating...';
-            
-            try {
-                await generateFeed(url, seed || undefined);
-                showMessage('Feed generated successfully!', 'success');
-                document.getElementById('generateForm').reset();
-                await refreshFeeds();
-            } catch (error) {
-                showMessage(error.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Generate Shuffled Feed';
+            if (!feedUrl) {
+                showMessage('Please enter a feed URL', 'error');
+                return;
             }
+
+            const params = new URLSearchParams();
+            params.append('url', feedUrl);
+            if (seed) {
+                params.append('seed', seed);
+            }
+
+            const generatedUrl = `${window.location.origin}/api/feed?${params.toString()}`;
+            
+            document.getElementById('resultUrl').textContent = generatedUrl;
+            document.getElementById('resultSection').classList.add('visible');
+            
+            showMessage('Feed URL generated! Copy it and add to Overcast.', 'success');
         });
 
         window.copyToClipboard = copyToClipboard;
-        window.handleDelete = handleDelete;
-
-        refreshFeeds();
+        window.resetForm = resetForm;
     </script>
 </body>
 </html>

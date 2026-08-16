@@ -116,4 +116,9 @@ export class FeedProcessor {
       [array[i], array[j]] = [array[j], array[i]];
     }
   }
+
+  async processAndShuffle(feedUrl: string, seed?: number, baseUrl?: string): Promise<string> {
+    const originalFeed = await this.fetchFeed(feedUrl);
+    return this.shuffleFeed(originalFeed, seed, baseUrl);
+  }
 }
