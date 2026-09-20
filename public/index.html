@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShufflePod - Shuffle Your Podcast Feeds</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-section.visible {
+            display: block;
+        }
+
+        .result-url {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            word-break: break-all;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .btn-copy {
+            background: #28a745;
+            width: auto;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .btn-copy:hover {
+            background: #218838;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #856404;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.95em;
+            color: #004085;
+        }
+
+        .info-box h3 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        .example {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 10px 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔀 ShufflePod</h1>
+            <p>Shuffle your favorite podcast feeds</p>
+        </div>
+
+        <div class="card">
+            <h2>Generate Shuffled Feed URL</h2>
+            <div id="message"></div>
+            
+            <form id="generateForm">
+                <div class="form-group">
+                    <label for="feedUrl">Podcast Feed URL</label>
+                    <input 
+                        type="text" 
+                        id="feedUrl" 
+                        name="feedUrl" 
+                        placeholder="https://example.com/podcast/feed.xml"
+                        required
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="seed">Seed (optional - for consistent shuffle order)</label>
+                    <input 
+                        type="number" 
+                        id="seed" 
+                        name="seed" 
+                        placeholder="e.g., 12345"
+                    >
+                </div>
+                <button type="submit" class="btn" id="generateBtn">
+                    Generate Feed URL
+                </button>
+            </form>
+
+            <div class="note">
+                💡 <strong>Tip:</strong> Use the same seed to get the same shuffle order every time. Leave empty for a random shuffle based on current timestamp.
+            </div>
+
+            <div id="resultSection" class="result-section">
+                <h3 style="margin-bottom: 15px; color: #333;">Your Shuffled Feed URL</h3>
+                <div class="result-url" id="resultUrl"></div>
+                <button class="btn btn-copy" onclick="copyToClipboard()">
+                    📋 Copy URL
+                </button>
+                <button class="btn btn-copy" onclick="resetForm()" style="background: #6c757d;">
+                    🔄 Create Another
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>How to Use in Overcast</h2>
+            <div class="info-box">
+                <ol style="margin-left: 20px;">
+                    <li>Enter your podcast feed URL above and click "Generate Feed URL"</li>
+                    <li>Copy the generated URL</li>
+                    <li>Open Overcast app on your device</li>
+                    <li>Tap the "+" button to add a podcast</li>
+                    <li>Select "Add URL" and paste your shuffled feed URL</li>
+                    <li>Tap "Add" and enjoy your shuffled podcast!</li>
+                </ol>
+            </div>
+            
+            <div class="info-box" style="margin-top: 20px;">
+                <h3>How It Works</h3>
+                <p>ShufflePod dynamically generates shuffled versions of podcast feeds:</p>
+                <ul>
+                    <li><strong>Dynamic:</strong> Feed is generated fresh each time Overcast checks for updates</li>
+                    <li><strong>Consistent:</strong> Using the same seed always produces the same shuffle order</li>
+                    <li><strong>Up-to-date:</strong> New episodes from the original feed are automatically included</li>
+                    <li><strong>Cached:</strong> Overcast caches the feed, so we're not constantly fetching</li>
+                </ul>
+            </div>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <h3>Example URLs</h3>
+                <p>Your generated feed URL will look like:</p>
+                <div class="example">
+                    https://yoursite.netlify.app/api/feed?url=https://example.com/podcast.xml&seed=12345
+                </div>
+                <p style="margin-top: 10px;"><strong>Without seed</strong> (random shuffle based on timestamp):</p>
+                <div class="example">
+                    https://yoursite.netlify.app/api/feed?url=https://example.com/podcast.xml
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(text, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        function copyToClipboard() {
+            const urlText = document.getElementById('resultUrl').textContent;
+            navigator.clipboard.writeText(urlText).then(() => {
+                showMessage('Feed URL copied to clipboard!', 'success');
+            }).catch(() => {
+                showMessage('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('generateForm').reset();
+            document.getElementById('resultSection').classList.remove('visible');
+        }
+
+        document.getElementById('generateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const feedUrl = document.getElementById('feedUrl').value;
+            const seed = document.getElementById('seed').value;
+            
+            if (!feedUrl) {
+                showMessage('Please enter a feed URL', 'error');
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.append('url', feedUrl);
+            if (seed) {
+                params.append('seed', seed);
+            }
+
+            const generatedUrl = `${window.location.origin}/api/feed?${params.toString()}`;
+            
+            document.getElementById('resultUrl').textContent = generatedUrl;
+            document.getElementById('resultSection').classList.add('visible');
+            
+            showMessage('Feed URL generated! Copy it and add to Overcast.', 'success');
+        });
+
+        window.copyToClipboard = copyToClipboard;
+        window.resetForm = resetForm;
+    </script>
+</body>
+</html>
