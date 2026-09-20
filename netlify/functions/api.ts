@@ -27,6 +27,12 @@ app.get('/feed', async (c) => {
       return c.json({ error: 'Seed must be a number' }, 400);
     }
 
+    // Validate that the URL points to a valid podcast feed
+    const validation = await feedProcessor.validatePodcastFeed(url);
+    if (!validation.valid) {
+      return c.json({ error: 'Invalid podcast feed', details: validation.error }, 400);
+    }
+
     const baseUrl = new URL(c.req.url).origin;
     const shuffledXml = await feedProcessor.processAndShuffle(url, seed, baseUrl);
 

@@ -14,6 +14,34 @@ export class FeedProcessor {
     });
   }
 
+  async validatePodcastFeed(feedUrl: string): Promise<{ valid: boolean; error?: string }> {
+    try {
+      const feed = await this.parser.parseURL(feedUrl);
+      
+      if (!feed || typeof feed !== 'object') {
+        return { valid: false, error: 'URL does not return a valid feed' };
+      }
+
+      if (!feed.items || !Array.isArray(feed.items) || feed.items.length === 0) {
+        return { valid: false, error: 'Feed contains no episodes' };
+      }
+
+      const hasAudioContent = feed.items.some((item: any) => 
+        item.enclosure?.url && 
+        (item.enclosure.type?.includes('audio') || item.enclosure.url?.match(/\.(mp3|m4a|wav|ogg)$/i))
+      );
+
+      if (!hasAudioContent) {
+        return { valid: false, error: 'Feed does not appear to be a podcast (no audio enclosures found)' };
+      }
+
+      return { valid: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return { valid: false, error: `Failed to fetch or parse feed: ${errorMessage}` };
+    }
+  }
+
   async fetchFeed(feedUrl: string): Promise<any> {
     return this.parser.parseURL(feedUrl);
   }
