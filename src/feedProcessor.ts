@@ -1,48 +1,24 @@
 import Parser from 'rss-parser';
 import { Feed } from 'feed';
 
-interface FeedItem extends Parser.Item {
-  enclosure?: {
-    url: string;
-    type?: string;
-    length?: string;
-  };
-  itunes?: {
-    duration?: string;
-    explicit?: string;
-    image?: string;
-  };
-}
-
-interface ParsedFeed extends Parser.Output<FeedItem> {
-  itunes?: {
-    author?: string;
-    image?: string;
-    owner?: {
-      name?: string;
-      email?: string;
-    };
-  };
-}
-
 export class FeedProcessor {
-  private parser: Parser<ParsedFeed, FeedItem>;
+  private parser: Parser;
 
   constructor() {
     this.parser = new Parser({
       timeout: 30000,
       customFields: {
-        feed: ['itunes'],
-        item: ['itunes', 'enclosure'],
+        feed: ['itunes', 'language', 'copyright'],
+        item: ['itunes', 'enclosure', 'author', 'creator'],
       },
     });
   }
 
-  async fetchFeed(feedUrl: string): Promise<ParsedFeed> {
+  async fetchFeed(feedUrl: string): Promise<any> {
     return this.parser.parseURL(feedUrl);
   }
 
-  shuffleFeed(originalFeed: ParsedFeed, seed?: number, baseUrl?: string): string {
+  shuffleFeed(originalFeed: any, seed?: number, baseUrl?: string): string {
     const feed = new Feed({
       title: `🔀 ${originalFeed.title || 'Shuffled Podcast'}`,
       description: `Shuffled version of: ${originalFeed.description || originalFeed.title || 'Unknown Podcast'}`,

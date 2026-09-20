@@ -1,5 +1,5 @@
+import type { Context } from '@netlify/functions';
 import { Hono } from 'hono';
-import { handle } from '@netlify/functions';
 import { FeedProcessor } from '../../src/feedProcessor.js';
 
 const app = new Hono();
@@ -41,4 +41,4 @@ app.get('/feed', async (c) => {
   }
 });
 
-export default handle(app);
+export default app.fetch;
