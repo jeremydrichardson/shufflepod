@@ -1,6 +1,11 @@
 import Parser from 'rss-parser';
 import { Feed } from 'feed';
 
+interface ITunesLookupResponse {
+  resultCount: number;
+  results: Array<{ feedUrl?: string }>;
+}
+
 export class FeedProcessor {
   private parser: Parser;
 
@@ -12,6 +17,68 @@ export class FeedProcessor {
         item: ['itunes', 'enclosure', 'author', 'creator'],
       },
     });
+  }
+
+  async extractFeedUrl(inputUrl: string): Promise<{ feedUrl: string; wasConverted: boolean; source?: string }> {
+    const applePodcastsMatch = inputUrl.match(
+      /(?:podcasts|itunes)\.apple\.com\/(?:[a-z]{2}\/)?podcast\/(?:[^/]+\/)?id(\d+)/i
+    );
+
+    if (applePodcastsMatch) {
+      const podcastId = applePodcastsMatch[1];
+
+      try {
+        const response = await fetch(`https://itunes.apple.com/lookup?id=${podcastId}&entity=podcast`);
+        if (!response.ok) {
+          throw new Error(`iTunes lookup failed with status ${response.status}`);
+        }
+
+        const data = (await response.json()) as ITunesLookupResponse;
+
+        if (data.resultCount > 0 && data.results[0]?.feedUrl) {
+          return {
+            feedUrl: data.results[0].feedUrl,
+            wasConverted: true,
+            source: 'Apple Podcasts',
+          };
+        }
+
+        throw new Error('Could not find RSS feed for this Apple Podcasts URL');
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Failed to extract feed from Apple Podcasts: ${errorMessage}`);
+      }
+    }
+
+    return { feedUrl: inputUrl, wasConverted: false };
+  }
+
+  async validatePodcastFeed(feedUrl: string): Promise<{ valid: boolean; error?: string }> {
+    try {
+      const feed = await this.parser.parseURL(feedUrl);
+      
+      if (!feed || typeof feed !== 'object') {
+        return { valid: false, error: 'URL does not return a valid feed' };
+      }
+
+      if (!feed.items || !Array.isArray(feed.items) || feed.items.length === 0) {
+        return { valid: false, error: 'Feed contains no episodes' };
+      }
+
+      const hasAudioContent = feed.items.some((item: any) => 
+        item.enclosure?.url && 
+        (item.enclosure.type?.includes('audio') || item.enclosure.url?.match(/\.(mp3|m4a|wav|ogg)$/i))
+      );
+
+      if (!hasAudioContent) {
+        return { valid: false, error: 'Feed does not appear to be a podcast (no audio enclosures found)' };
+      }
+
+      return { valid: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return { valid: false, error: `Failed to fetch or parse feed: ${errorMessage}` };
+    }
   }
 
   async fetchFeed(feedUrl: string): Promise<any> {
