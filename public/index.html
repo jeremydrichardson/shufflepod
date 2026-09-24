@@ -214,12 +214,12 @@
             
             <form id="generateForm">
                 <div class="form-group">
-                    <label for="feedUrl">Podcast Feed URL</label>
+                    <label for="feedUrl">Podcast Feed URL or Apple Podcasts Link</label>
                     <input 
                         type="text" 
                         id="feedUrl" 
                         name="feedUrl" 
-                        placeholder="https://example.com/podcast/feed.xml"
+                        placeholder="https://podcasts.apple.com/us/podcast/name/id123456789 or RSS feed URL"
                         required
                     >
                 </div>
@@ -238,7 +238,7 @@
             </form>
 
             <div class="note">
-                💡 <strong>Tip:</strong> Use the same seed to get the same shuffle order every time. Leave empty for a random shuffle based on current timestamp.
+                💡 <strong>Tip:</strong> You can paste an Apple Podcasts URL directly - we'll automatically find the RSS feed! Use the same seed to get the same shuffle order every time, or leave empty for a random shuffle.
             </div>
 
             <div id="resultSection" class="result-section">
@@ -254,11 +254,21 @@
         </div>
 
         <div class="card">
-            <h2>How to Use in Overcast</h2>
+            <h2>How to Use</h2>
             <div class="info-box">
+                <h3>Getting Started</h3>
                 <ol style="margin-left: 20px;">
-                    <li>Enter your podcast feed URL above and click "Generate Feed URL"</li>
-                    <li>Copy the generated URL</li>
+                    <li>Find your podcast on Apple Podcasts or get the RSS feed URL</li>
+                    <li>Copy the URL (either works!)</li>
+                    <li>Paste it into the form above and click "Generate Feed URL"</li>
+                    <li>Copy the generated shuffled feed URL</li>
+                    <li>Add it to your podcast app (instructions for Overcast below)</li>
+                </ol>
+            </div>
+            
+            <div class="info-box" style="margin-top: 20px;">
+                <h3>Adding to Overcast</h3>
+                <ol style="margin-left: 20px;">
                     <li>Open Overcast app on your device</li>
                     <li>Tap the "+" button to add a podcast</li>
                     <li>Select "Add URL" and paste your shuffled feed URL</li>
@@ -278,12 +288,27 @@
             </div>
 
             <div class="info-box" style="margin-top: 20px;">
-                <h3>Example URLs</h3>
+                <h3>Supported URL Formats</h3>
+                <p><strong>Apple Podcasts:</strong></p>
+                <div class="example">
+                    https://podcasts.apple.com/us/podcast/podcast-name/id123456789
+                </div>
+                <p style="margin-top: 15px;"><strong>Direct RSS Feed:</strong></p>
+                <div class="example">
+                    https://example.com/podcast.xml
+                </div>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                    We automatically detect Apple Podcasts URLs and extract the RSS feed for you!
+                </p>
+            </div>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <h3>Example Generated URLs</h3>
                 <p>Your generated feed URL will look like:</p>
                 <div class="example">
                     https://yoursite.netlify.app/api/feed?url=https://example.com/podcast.xml&seed=12345
                 </div>
-                <p style="margin-top: 10px;"><strong>Without seed</strong> (random shuffle based on timestamp):</p>
+                <p style="margin-top: 10px;"><strong>Without seed</strong> (random shuffle):</p>
                 <div class="example">
                     https://yoursite.netlify.app/api/feed?url=https://example.com/podcast.xml
                 </div>

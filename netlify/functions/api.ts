@@ -17,7 +17,7 @@ app.get('/feed', async (c) => {
     if (!url || typeof url !== 'string') {
       return c.json({ error: 'Feed URL is required' }, 400);
     }
-
+    
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       return c.json({ error: 'Invalid URL format' }, 400);
     }
@@ -27,18 +27,23 @@ app.get('/feed', async (c) => {
       return c.json({ error: 'Seed must be a number' }, 400);
     }
 
+    // Extract RSS feed URL from Apple Podcasts links or other sources
+    const { feedUrl, wasConverted, source } = await feedProcessor.extractFeedUrl(url);
+
     // Validate that the URL points to a valid podcast feed
-    const validation = await feedProcessor.validatePodcastFeed(url);
+    const validation = await feedProcessor.validatePodcastFeed(feedUrl);
     if (!validation.valid) {
       return c.json({ error: 'Invalid podcast feed', details: validation.error }, 400);
     }
 
     const baseUrl = new URL(c.req.url).origin;
-    const shuffledXml = await feedProcessor.processAndShuffle(url, seed, baseUrl);
+    const shuffledXml = await feedProcessor.processAndShuffle(feedUrl, seed, baseUrl);
 
     return c.body(shuffledXml, 200, {
       'Content-Type': 'application/rss+xml; charset=utf-8',
       'Cache-Control': 'public, max-age=3600',
+      'X-Feed-Converted': wasConverted ? 'true' : 'false',
+      'X-Feed-Source': source || 'direct',
     });
   } catch (error) {
     console.error('Error generating feed:', error);
