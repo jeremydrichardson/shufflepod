@@ -9,6 +9,7 @@ A simple service for creating shuffled podcast feeds. Enter any podcast RSS feed
 - **Reproducible Shuffling**: Optional seed parameter for consistent shuffle orders
 - **Always Up-to-date**: Automatically includes new episodes from the source feed
 - **Netlify Ready**: Deployed as serverless functions with zero storage needed
+- **Fully Tested**: Comprehensive test suite with Jest
 
 ## Quick Start (Local Development)
 
@@ -17,15 +18,45 @@ A simple service for creating shuffled podcast feeds. Enter any podcast RSS feed
 npm install
 ```
 
-2. **Run locally with Netlify Dev**:
+2. **Run tests**:
+```bash
+npm test
+```
+
+3. **Run locally with Netlify Dev**:
 ```bash
 npm run dev
 ```
 
-3. **Open in browser**:
+4. **Open in browser**:
 ```
 http://localhost:8888
 ```
+
+## Testing
+
+### Run Tests
+```bash
+npm test
+```
+
+### Run Tests in Watch Mode
+```bash
+npm test:watch
+```
+
+### Run Tests with Coverage
+```bash
+npm test:coverage
+```
+
+## Test Coverage
+
+The test suite includes:
+- **FeedProcessor Tests**: Shuffling logic, seed consistency, RSS generation
+- **API Endpoint Tests**: Parameter validation, error handling, request/response
+
+All tests are automatically run on pull requests via GitHub Actions.
 
 ## Deployment to Netlify
 
@@ -159,6 +190,7 @@ Health check endpoint.
 - **TypeScript**: Full type safety
 - **RSS Parser**: Parse any podcast feed format
 - **Feed Library**: Generate RSS 2.0 compliant feeds
+- **Jest**: Comprehensive testing framework
 - **Zero Storage**: Fully stateless, no database needed
 
 ## Use Cases
@@ -201,24 +233,32 @@ shufflepod/
 ├── public/
 │   └── index.html              # Web interface
 ├── src/
-│   └── feedProcessor.ts        # Feed parsing and shuffling
+│   ├── feedProcessor.ts        # Feed parsing and shuffling
+│   └── __tests__/
+│       └── feedProcessor.test.ts
 ├── netlify/
 │   └── functions/
-│       └── api.ts              # Hono API endpoint
+│       ├── api.ts              # Hono API endpoint
+│       └── __tests__/
+│           └── api.test.ts
+├── .github/
+│   └── workflows/
+│       └── test.yml            # GitHub Actions CI
 ├── netlify.toml               # Netlify configuration
+├── jest.config.js             # Jest configuration
 ├── package.json               # Dependencies
 └── tsconfig.json             # TypeScript config
 ```
 
-### Local Testing
-```bash
-npm install
-npm run dev       # Runs on localhost:8888
-```
+### Scripts
 
-### Building
 ```bash
-npm run build     # Compiles TypeScript
+npm run dev           # Start development server
+npm run build         # Build TypeScript
+npm test              # Run tests
+npm run test:watch    # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
+npm run deploy        # Deploy to Netlify
 ```
 
 ## Performance
@@ -272,9 +312,19 @@ Planned features:
 - Subsequent requests cached for 1 hour
 - Large feeds (500+ episodes) take longer
 
+### Tests failing
+- Run `npm install` to ensure dependencies are installed
+- Make sure Node.js 20+ is installed
+- Run `npm run build` to check for TypeScript errors
+
 ## Contributing
 
 Contributions welcome! Please submit a Pull Request.
+
+All PRs should:
+- Pass all tests (`npm test`)
+- Pass TypeScript compilation (`npm run build`)
+- Include tests for new features
 
 ## License
 
