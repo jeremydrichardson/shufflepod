@@ -1,6 +1,11 @@
 import Parser from 'rss-parser';
 import { Feed } from 'feed';
 
+interface ITunesLookupResponse {
+  resultCount: number;
+  results: Array<{ feedUrl?: string }>;
+}
+
 export class FeedProcessor {
   private parser: Parser;
 
@@ -15,32 +20,36 @@ export class FeedProcessor {
   }
 
   async extractFeedUrl(inputUrl: string): Promise<{ feedUrl: string; wasConverted: boolean; source?: string }> {
-    // Check if it's an Apple Podcasts URL
-    const applePodcastsMatch = inputUrl.match(/podcasts\.apple\.com\/[a-z]{2}\/podcast\/[^\/]+\/id(\d+)/i);
-    
+    const applePodcastsMatch = inputUrl.match(
+      /(?:podcasts|itunes)\.apple\.com\/(?:[a-z]{2}\/)?podcast\/(?:[^/]+\/)?id(\d+)/i
+    );
+
     if (applePodcastsMatch) {
       const podcastId = applePodcastsMatch[1];
-      
+
       try {
         const response = await fetch(`https://itunes.apple.com/lookup?id=${podcastId}&entity=podcast`);
-        const data = await response.json();
-        
+        if (!response.ok) {
+          throw new Error(`iTunes lookup failed with status ${response.status}`);
+        }
+
+        const data = (await response.json()) as ITunesLookupResponse;
+
         if (data.resultCount > 0 && data.results[0]?.feedUrl) {
           return {
             feedUrl: data.results[0].feedUrl,
             wasConverted: true,
-            source: 'Apple Podcasts'
+            source: 'Apple Podcasts',
           };
         }
-        
+
         throw new Error('Could not find RSS feed for this Apple Podcasts URL');
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`Failed to extract feed from Apple Podcasts: ${errorMessage}`);
       }
     }
-    
-    // If not an Apple Podcasts URL, assume it's already an RSS feed URL
+
     return { feedUrl: inputUrl, wasConverted: false };
   }
 
